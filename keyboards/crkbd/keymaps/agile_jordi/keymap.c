@@ -13,57 +13,46 @@ extern uint8_t is_master;
 #define _SYM 5
 #define _WIN 6
 
+enum {
+  TD_RESET = 0
+};
+
 enum custom_keycodes {
   // Non shifted keycodes (we want to register keypress without shift even if shift is currently pressed):
   NS_E = SAFE_RANGE,
   NS_U,
-  NS_MINS,
   NS_EQL,
-  NS_LBRC,
-  NS_RBRC,
-  NS_BSLS,
-  NS_NUHS,
   NS_SCLN,
-  NS_QUOT,
   NS_GRV,
-  NS_COMM,
-  NS_DOT,
-  NS_SLSH,
-  NS_NUBS,
+  CA_ACCO,
+  CA_ACCT,
+  CA_DIE,
   // Retype keys: we want a keypress even if it is already pressed
-  RT_E
+  RT_E,
+  // LT with shifted key
+  M_CL_CTL
 };
-
-// TODO: ???
-// enum macro_keycodes {
-//   KC_SAMPLEMACRO,
-// };
 
 // Home row modifiers
 #define M_J_SFT LT(_SHIFTED, KC_J)
 #define M_K_CMD CMD_T(KC_K)
 #define M_L_ALT ALT_T(KC_L)
-#define M_CL_CTL CTL_T(KC_COLON)
 #define M_F_SFT LT(_SHIFTED, KC_F)
 #define M_D_CMD CMD_T(KC_D)
 #define M_S_ALT ALT_T(KC_S)
 #define M_A_CTL CTL_T(KC_A)
 
 // Thumb layer tap
-// TODO: Can we LT to a modified key?? NO
-#define L_NAV_U LT(_NAV,G(KC_Z))
-#define L_SYM_E LT(_SYM,KC_ENT)
+#define L_SYM_U  KC_UNDO
+#define L_NAV_B LT(_NAV,KC_BSPC)
 #define L_NUM_S LT(_NUMS,KC_SPC)
-#define L_FUN_B LT(_FUN,KC_BSPC)
+#define L_FUN_E LT(_FUN,KC_ENT)
+#define L_WIN KC_AGAIN
 
-// Aliases
-// We use Non Shifted versions so that the key actually works even if shift is pressed
-// TODO: Check this actually works, as when pressing Alt, shift may be still pressed
-#define CA_ACCO A(NS_GRV)
-#define CA_ACCT A(NS_E)
-#define CA_DIE A(NS_U)
 
 #define S_EUR A(KC_2)
+
+#define TD_RST TD(TD_RESET)
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
@@ -73,7 +62,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
       KC_ESC,  KC_Q,    KC_W,    RT_E,    KC_R,    KC_T,                         KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_SLASH,\
       KC_TAB,  M_A_CTL, M_S_ALT, M_D_CMD, M_F_SFT, KC_G,                         KC_H,    M_J_SFT, M_K_CMD, M_L_ALT, M_CL_CTL,CA_ACCT,\
       CA_ACCO, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,                         KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_MINS, KC_QUOT,\
-                                          L_NAV_U, L_SYM_E, S(G(KC_Z)), KC_DEL,  L_NUM_S, L_FUN_B \
+                                          L_SYM_U, L_NAV_B, L_WIN,      KC_DEL,  L_NUM_S, L_FUN_E \
   ),
 
   // # Why a shifted layer?
@@ -107,7 +96,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   [_SHIFTED] = LAYOUT_split_3x6_3( \
       _______, _______, _______, _______, _______, _______,                       _______, _______, _______, _______, _______, KC_AT,\
-      _______, _______, _______, _______, _______, _______,                       _______, _______, _______, _______, _______, CA_DIE,\
+      _______, _______, _______, _______, _______, _______,                       _______, _______, _______, _______, NS_SCLN, CA_DIE,\
       NS_EQL,  _______, _______, _______, _______, _______,                       _______, _______, KC_QUES, KC_EXLM, KC_UNDS, KC_DQT,\
                                           _______, _______, _______,     _______, _______, _______ \
     ),
@@ -119,7 +108,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 
   [_FUN] = LAYOUT_split_3x6_3( \
-      XXXXXXX, KC_F10,  KC_F7,   KC_F8,   KC_F9,   KC__VOLUP,                    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,\
+      TD_RST,  KC_F10,  KC_F7,   KC_F8,   KC_F9,   KC__VOLUP,                    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,\
       XXXXXXX, KC_F11,  KC_F4,   KC_F5,   KC_F6,   KC__VOLDOWN,                  XXXXXXX, KC_RSFT, KC_RCMD, KC_RALT, KC_RCTL, XXXXXXX,\
       XXXXXXX, KC_F12,  KC_F1,   KC_F2,   KC_F3,   KC__MUTE,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,\
                                           XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX \
@@ -144,11 +133,12 @@ void persistent_default_layer_set(uint16_t default_layer) {
   default_layer_set(default_layer);
 }
 
-
+// Tested:
+// Register a shifted mod upon entering the shifted layer, unregister upon leaving it
 // https://docs.qmk.fm/#/custom_quantum_functions?id=layer-change-code
 layer_state_t layer_state_set_user(layer_state_t state) {
-  // I asssume IS_LAYER_ON returns wether the layer is on before applying state
-  // I try to register KC_LSFT MOD only when the _SHIFTED layer is activated, not every time it is active
+  // IS_LAYER_ON returns wether the layer is on before applying state
+  // I register KC_LSFT MOD only when the _SHIFTED layer is activated, not every time it is active
   // I assume registering the KC_LSFT MOD is somehow better than registering a key, but this is pure speculation
   if(IS_LAYER_OFF(_SHIFTED) && IS_LAYER_ON_STATE(state, _SHIFTED)){
     // https://docs.qmk.fm/#/feature_macros?id=advanced-macro-functions
@@ -166,24 +156,14 @@ uint16_t nonShiftedCode(uint16_t keycode) {
   switch(keycode) {
     case NS_E: return KC_E;
     case NS_U: return KC_U;
-    case NS_MINS: return KC_MINS;
     case NS_EQL: return KC_EQL;
-    case NS_LBRC: return KC_LBRC;
-    case NS_RBRC: return KC_RBRC;
-    case NS_BSLS: return KC_BSLS;
-    case NS_NUHS: return KC_NUHS;
     case NS_SCLN: return KC_SCLN;
-    case NS_QUOT: return KC_QUOT;
     case NS_GRV: return KC_GRV;
-    case NS_COMM: return KC_COMM;
-    case NS_DOT: return KC_DOT;
-    case NS_SLSH: return KC_SLSH;
-    case NS_NUBS: return KC_NUBS;
     default: return keycode;
   }
 }
 
-bool process_non_shifted_key(keyrecord_t *record, uint8_t normalKeycode){
+bool process_non_shifted_key(keyrecord_t *record, uint16_t normalKeycode){
   if(record->event.pressed) {
       // https://www.reddit.com/r/olkb/comments/5r0mfp/check_for_modifiersother_keys_in_macros/
       bool lsftActive = get_mods() & MOD_BIT(KC_LSFT);
@@ -202,7 +182,7 @@ bool process_non_shifted_key(keyrecord_t *record, uint8_t normalKeycode){
       if (needToUnCaps) {
         tap_code(KC_CAPS);
       } 
-      register_code16(nonShiftedCode(normalKeycode));
+      register_code16(normalKeycode);
       if (needToUnCaps) {
         tap_code(KC_CAPS);
       } 
@@ -221,21 +201,109 @@ bool process_non_shifted_key(keyrecord_t *record, uint8_t normalKeycode){
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+
+  static uint16_t win_again_timer;
+  static uint16_t sym_undo_timer;
+  static uint16_t cln_ctl_timer;
+
   // Non Shifted key codes when shift is pressed:
-  if (keycode >= NS_E && keycode <= NS_NUBS) {
+  if (keycode >= NS_E && keycode <= NS_GRV) {
     return process_non_shifted_key(record, nonShiftedCode(keycode));
   }
 
-  // A rapid succession of ´ + E may ignore E (when it happens before the keyup of ´) because ´ is, in fact A(KB_E).
-  // So the custom keycode RT_E (for ReType) simply registers KC_E (which unregisters it if alerady perssed, see actions.c:804)
-  if (keycode == RT_E) {
-    if (record->event.pressed){
-      register_code(KC_E);
-    } else {
-      unregister_code(KC_E);
-    }
-    return false;
-  } 
+  switch(keycode) { 
 
-  return true;
+    // TODO: This still does not work with caps lock. It disables caps lock for some reason...
+    case CA_ACCO: // A(NS_GRV)
+      if (record->event.pressed){
+        register_mods(MOD_BIT(KC_LALT));
+        process_non_shifted_key(record, KC_GRV);
+        unregister_code(KC_GRV);
+        unregister_mods(MOD_BIT(KC_LALT));
+      }
+      return false;
+    case CA_ACCT: // A(NS_E)
+      if (record->event.pressed){
+        register_mods(MOD_BIT(KC_LALT));
+        process_non_shifted_key(record, KC_E);
+        unregister_code(KC_E);
+        unregister_mods(MOD_BIT(KC_LALT));
+      }
+      return false;
+    case CA_DIE:  // A(NS_U)
+      if (record->event.pressed){
+        register_mods(MOD_BIT(KC_LALT));
+        process_non_shifted_key(record, KC_U);
+        unregister_code(KC_U);
+        unregister_mods(MOD_BIT(KC_LALT));
+      }
+      return false;
+
+    // Tested:
+    // A rapid succession of ´ + E may ignore E (when it happens before the keyup of ´) because ´ is, in fact A(KB_E).
+    // So the custom keycode RT_E (for ReType) simply registers KC_E (which unregisters it if alerady perssed, see actions.c:804)
+    case RT_E:
+      if (record->event.pressed){
+        register_code(KC_E);
+      } else {
+        unregister_code(KC_E);
+      }
+      return false;
+
+    // Tested:
+    // Poor's man LT/MT used when we want a shifted or otherwise modified key code
+    // See https://thomasbaart.nl/2018/12/09/qmk-basics-tap-and-hold-actions/#a-workaround-for-mod-tap 
+    case L_SYM_U:
+      if (record->event.pressed){
+        sym_undo_timer = timer_read();
+        layer_on(_SYM);
+      } else {
+        layer_off(_SYM);
+        if (timer_elapsed(sym_undo_timer) < TAPPING_TERM) {
+          tap_code16(G(KC_Z));
+        }
+      }
+      return false;
+    case L_WIN:
+      if(record->event.pressed) {
+        win_again_timer = timer_read();
+        register_code(KC_LCMD);
+        register_code(KC_LSFT);
+      } else {
+        unregister_code(KC_LSFT);
+        unregister_code(KC_LCMD);
+        if (timer_elapsed(win_again_timer) < TAPPING_TERM) {
+          tap_code16(S(G(KC_Z)));
+        }
+      }
+      return false;
+
+    case M_CL_CTL:
+      if (record->event.pressed){
+        cln_ctl_timer = timer_read();
+        register_code(KC_RCTL);
+      } else {
+        unregister_code(KC_RCTL);
+        if (timer_elapsed(cln_ctl_timer) < TAPPING_TERM) {
+          tap_code16(KC_COLN);
+        }
+      }
+      return false;
+
+    default:
+      return true;
+  }
+
 }
+
+// Tested:
+void safe_reset(qk_tap_dance_state_t *state, void *user_data) {
+  if (state->count == 5) {
+    // Reset the keyboard if you tap the key more than three times
+    reset_keyboard();
+    reset_tap_dance(state);
+  }
+}
+qk_tap_dance_action_t tap_dance_actions[] = {
+  [TD_RESET] = ACTION_TAP_DANCE_FN(safe_reset)
+};
