@@ -1,5 +1,34 @@
 // https://docs.qmk.fm/#/keymap
 
+// # Why a shifted layer?
+//
+// Each non function key in the ANSI layout has a main symbol and a symbol emitted when pressed alongside shift. The same goes for Alt
+// and other modifiers. We can adjust almost everything, but deciding what symbol to emmit when a key is pressed alongside shift is not easy.
+// This layer is an answer to that. We could do something similar for Alt.
+// 
+// ## How does it work?
+//
+// We don't define any key to act as shift. Instead, the key that will shift keys activates this layer.
+// When entering the layer, shift is prerssed, and it is released when leaving the layer.
+// That way, any key not overriden in this layer behaves exactly as the key in the base layer when shifted in the ANSI US EN layout.
+// But we can redefine certain keys to act differently.
+// When one of those keys is a symbol that is not in shift position, we need to "unshift" before registering the key and reshift
+// afterwards, so shift keeps pressed after that symbol.
+//
+// ## Alternatives
+//
+// I tried not registering shift but defining each key in the layer to be S(x) where x is the corresponding key in the base layer. But:
+//
+// - That implied a lot of duplication in the definition of this layer. If something in the base layer changed I needed to remember
+// to make the same change in the shifted layer
+// - ASD and ;LK needed to mod tap (like in the base layer), but with a mod on top of the layer (like ML). No feature combining these
+// 2 functionalities exist and it is not as simple as using a custom keycode
+//
+// ## What about CAPS_LOCK?
+//
+// We can still use CAPS_LOCK as usual, as it should only affect alphas. We need to handle accents a dieresis to use a non shifted
+// version of the letter, as otherwise they emmit the wrong symbol. 
+
 #include QMK_KEYBOARD_H
 
 extern uint8_t is_master;
@@ -30,7 +59,12 @@ enum custom_keycodes {
   // Retype keys: we want a keypress even if it is already pressed
   RT_E,
   // LT with shifted key
-  M_CL_CTL
+  M_CL_CTL,
+  // Special function keys
+  //NV_CMTB
+  // Special symbols
+  S_ELG,
+  S_KAR
 };
 
 // Home row modifiers
@@ -43,14 +77,15 @@ enum custom_keycodes {
 #define M_A_CTL CTL_T(KC_A)
 
 // Thumb layer tap
-#define L_SYM_U  KC_UNDO
-#define L_NAV_B LT(_NAV,KC_BSPC)
+#define L_SYM_B LT(_SYM,KC_BSPC)
+#define L_NAV_S LT(_NAV,KC_SPC)
 #define L_NUM_S LT(_NUMS,KC_SPC)
 #define L_FUN_E LT(_FUN,KC_ENT)
 #define L_WIN KC_AGAIN
+#define L_SFT LT(_SHIFTED, KC_DEL)
 
 
-#define S_EUR A(KC_2)
+#define S_EUR A(S(KC_2))
 
 #define TD_RST TD(TD_RESET)
 
@@ -62,48 +97,19 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
       KC_ESC,  KC_Q,    KC_W,    RT_E,    KC_R,    KC_T,                         KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_SLASH,\
       KC_TAB,  M_A_CTL, M_S_ALT, M_D_CMD, M_F_SFT, KC_G,                         KC_H,    M_J_SFT, M_K_CMD, M_L_ALT, M_CL_CTL,CA_ACCT,\
       CA_ACCO, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,                         KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_MINS, KC_QUOT,\
-                                          L_SYM_U, L_NAV_B, L_WIN,      KC_DEL,  L_NUM_S, L_FUN_E \
+                                          L_SYM_B, L_NAV_S, L_WIN,      L_SFT,   L_NUM_S, L_FUN_E \
   ),
-
-  // # Why a shifted layer?
-  //
-  // Each non function key in the ANSI layout has a main symbol and a symbol emitted when pressed alongside shift. The same goes for Alt
-  // and other modifiers. We can adjust almost everything, but deciding what symbol to emmit when a key is pressed alongside shift is not easy.
-  // This layer is an answer to that. We could do something similar for Alt.
-  // 
-  // ## How does it work?
-  //
-  // We don't define any key to act as shift. Instead, the key that will shift keys activates this layer.
-  // When entering the layer, shift is prerssed, and it is released when leaving the layer.
-  // That way, any key not overriden in this layer behaves exactly as the key in the base layer when shifted in the ANSI US EN layout.
-  // But we can redefine certain keys to act differently.
-  // When one of those keys is a symbol that is not in shift position, we need to "unshift" before registering the key and reshift
-  // afterwards, so shift keeps pressed after that symbol.
-  //
-  // ## Alternatives
-  //
-  // I tried not registering shift but defining each key in the layer to be S(x) where x is the corresponding key in the base layer. But:
-  //
-  // - That implied a lot of duplication in the definition of this layer. If something in the base layer changed I needed to remember
-  // to make the same change in the shifted layer
-  // - ASD and ;LK needed to mod tap (like in the base layer), but with a mod on top of the layer (like ML). No feature combining these
-  // 2 functionalities exist and it is not as simple as using a custom keycode
-  //
-  // ## What about CAPS_LOCK?
-  //
-  // We can still use CAPS_LOCK as usual, as it should only affect alphas. We need to handle accents a dieresis to use a non shifted
-  // version of the letter, as otherwise they emmit the wrong symbol. 
 
   [_SHIFTED] = LAYOUT_split_3x6_3( \
       _______, _______, _______, _______, _______, _______,                       _______, _______, _______, _______, _______, KC_AT,\
       _______, _______, _______, _______, _______, _______,                       _______, _______, _______, _______, NS_SCLN, CA_DIE,\
       NS_EQL,  _______, _______, _______, _______, _______,                       _______, _______, KC_QUES, KC_EXLM, KC_UNDS, KC_DQT,\
-                                          _______, _______, _______,     _______, _______, _______ \
+                                          _______, _______, XXXXXXX,     XXXXXXX, _______, _______ \
     ),
   [_NUMS] = LAYOUT_split_3x6_3( \
       XXXXXXX, KC_PSLS, KC_7,    KC_8,    KC_9,    KC_PMNS,                      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,\
       XXXXXXX, KC_PAST, KC_4,    KC_5,    KC_6,    KC_PPLS,                      XXXXXXX, KC_RSFT, KC_RCMD, KC_RALT, KC_RCTL, XXXXXXX,\
-      XXXXXXX, KC_PERC, KC_1,    KC_2,    KC_3,    XXXXXXX,                      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,\
+      XXXXXXX, KC_PERC, KC_1,    KC_2,    KC_3,    KC_EQL,                       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,\
                                           XXXXXXX, KC_0,    XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX \
     ),
 
@@ -118,13 +124,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      KC_PGUP, A(KC_LEFT), KC_UP,A(KC_RGHT),XXXXXXX,XXXXXXX,\
       KC_CAPS, KC_LCTL, KC_LALT, KC_LCMD, KC_LSFT, XXXXXXX,                   G(KC_LEFT), KC_LEFT, KC_DOWN, KC_RGHT,G(KC_RGHT),XXXXXXX,\
       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      KC_PGDN, G(KC_V), G(KC_C), G(KC_X), XXXXXXX, XXXXXXX,\
-                                          XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX \
+                                          XXXXXXX, XXXXXXX, XXXXXXX,    KC_LSFT, KC_SPC,  XXXXXXX \
     ),
-  [_SYM] = LAYOUT_split_3x6_3( \
-      XXXXXXX, XXXXXXX, S_EUR,   XXXXXXX, XXXXXXX, XXXXXXX,                      KC_DLR,  KC_LBRC, KC_RBRC, KC_PIPE, KC_AMPR, KC_BSLS,\
-      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      KC_HASH, KC_LPRN, KC_RPRN, KC_RGHT, KC_SLSH, KC_PERC,\
-      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      KC_CIRC, KC_LCBR, KC_RCBR, KC_LT,   KC_GT,   KC_TILD,\
-                                          XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX \
+  [_SYM] = LAYOUT_split_3x6_3(
+      XXXXXXX, XXXXXXX, XXXXXXX, S_EUR,   KC_CIRC, XXXXXXX,                      KC_DLR,  KC_LBRC, KC_RBRC, KC_PIPE, KC_AMPR, KC_BSLS,\
+      XXXXXXX, XXXXXXX, S_ELG,   S_KAR,   XXXXXXX, XXXXXXX,                      KC_HASH, KC_LPRN, KC_RPRN, KC_ASTR, KC_SLSH, KC_PERC,\
+      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      KC_EQL,  KC_LCBR, KC_RCBR, KC_LT,   KC_GT,   KC_TILD,\
+                                          XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, KC_SPC,  XXXXXXX \
     )
 };
 
@@ -163,81 +169,99 @@ uint16_t nonShiftedCode(uint16_t keycode) {
   }
 }
 
-bool process_non_shifted_key(keyrecord_t *record, uint16_t normalKeycode){
-  if(record->event.pressed) {
-      // https://www.reddit.com/r/olkb/comments/5r0mfp/check_for_modifiersother_keys_in_macros/
-      bool lsftActive = get_mods() & MOD_BIT(KC_LSFT);
-      bool rsftActive = get_mods() & MOD_BIT(KC_RSFT);
-      bool capsLocked = host_keyboard_leds() & (1<<USB_LED_CAPS_LOCK);
-      // Caps lock does not affect symbols, but it does affect KC_E and KC_U
-      bool needToUnCaps = capsLocked && (normalKeycode == KC_E || normalKeycode == KC_U);
-      if (lsftActive) {
-        unregister_mods(MOD_BIT(KC_LSFT));
-        // unregister_code(KC_LSFT);
-      }
-      if (rsftActive) {
-        unregister_mods(MOD_BIT(KC_RSFT));
-        // unregister_code(KC_RSFT);
-      }
-      if (needToUnCaps) {
-        tap_code(KC_CAPS);
-      } 
-      register_code16(normalKeycode);
-      if (needToUnCaps) {
-        tap_code(KC_CAPS);
-      } 
-      if (lsftActive) {
-        register_mods(MOD_BIT(KC_LSFT));
-        // register_code(KC_LSFT);
-      }
-      if (rsftActive) {
-        register_mods(MOD_BIT(KC_RSFT));
-        // register_code(KC_RSFT);
-      }
-    } else {
-      unregister_code(normalKeycode);
-    }
-    return false;
+void register_non_shifted_key(uint16_t keycode){
+  // https://www.reddit.com/r/olkb/comments/5r0mfp/check_for_modifiersother_keys_in_macros/
+  bool lsftActive = get_mods() & MOD_BIT(KC_LSFT);
+  bool rsftActive = get_mods() & MOD_BIT(KC_RSFT);
+  bool capsLocked = host_keyboard_leds() & (1<<USB_LED_CAPS_LOCK);
+  // Caps lock does not affect symbols, but it does affect KC_E and KC_U
+  bool needToUnCaps = capsLocked && (keycode == KC_E || keycode == KC_U);
+  if (lsftActive) {
+    unregister_mods(MOD_BIT(KC_LSFT));
+    // unregister_code(KC_LSFT);
+  }
+  if (rsftActive) {
+    unregister_mods(MOD_BIT(KC_RSFT));
+    // unregister_code(KC_RSFT);
+  }
+  if (needToUnCaps) {
+    tap_code(KC_CAPS);
+  } 
+  register_code16(keycode);
+  if (needToUnCaps) {
+    tap_code(KC_CAPS);
+  } 
+  if (lsftActive) {
+    register_mods(MOD_BIT(KC_LSFT));
+    // register_code(KC_LSFT);
+  }
+  if (rsftActive) {
+    register_mods(MOD_BIT(KC_RSFT));
+    // register_code(KC_RSFT);
+  }  
+}
+
+bool process_non_shifted_key(bool pressed, uint16_t keycode){
+  if(pressed) {
+    register_non_shifted_key(keycode);
+  } else {
+    unregister_code(keycode);
+  }
+  return false;
+}
+
+// void update_swapper(uint16_t keycode, keyrecord_t *record){
+//   static bool swapper_active = false;
+//   if (keycode == NV_CMTB){
+//     if (record->event.pressed){
+//       if (!swapper_active){
+//         swapper_active = true;
+//         register_code(KC_LCMD);
+//       } 
+//       register_code(KC_TAB);
+//     } else {
+//       unregister_code(KC_TAB);
+//     }
+//   } else if (swapper_active && (keycode == KC_ESC || keycode == KC_ENT)){
+//     unregister_code(KC_LCMD);
+//     swapper_active = false;
+
+//   }
+// } 
+
+bool tap_unshifted_modded_key(uint16_t keycode, keyrecord_t *record, uint8_t mods){
+  if (record->event.pressed){
+    register_mods(mods);
+    register_non_shifted_key(keycode);
+    unregister_code(keycode);
+    unregister_mods(mods);
+  }
+  return false;
+
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
   static uint16_t win_again_timer;
-  static uint16_t sym_undo_timer;
+  // static uint16_t sym_undo_timer;
   static uint16_t cln_ctl_timer;
 
   // Non Shifted key codes when shift is pressed:
   if (keycode >= NS_E && keycode <= NS_GRV) {
-    return process_non_shifted_key(record, nonShiftedCode(keycode));
+    return process_non_shifted_key(record->event.pressed, nonShiftedCode(keycode));
   }
+
+  // update_swapper(keycode, record);
 
   switch(keycode) { 
 
     // TODO: This still does not work with caps lock. It disables caps lock for some reason...
     case CA_ACCO: // A(NS_GRV)
-      if (record->event.pressed){
-        register_mods(MOD_BIT(KC_LALT));
-        process_non_shifted_key(record, KC_GRV);
-        unregister_code(KC_GRV);
-        unregister_mods(MOD_BIT(KC_LALT));
-      }
-      return false;
+      return tap_unshifted_modded_key(KC_GRV, record, MOD_BIT(KC_LALT));
     case CA_ACCT: // A(NS_E)
-      if (record->event.pressed){
-        register_mods(MOD_BIT(KC_LALT));
-        process_non_shifted_key(record, KC_E);
-        unregister_code(KC_E);
-        unregister_mods(MOD_BIT(KC_LALT));
-      }
-      return false;
+      return tap_unshifted_modded_key(KC_E, record, MOD_BIT(KC_LALT));
     case CA_DIE:  // A(NS_U)
-      if (record->event.pressed){
-        register_mods(MOD_BIT(KC_LALT));
-        process_non_shifted_key(record, KC_U);
-        unregister_code(KC_U);
-        unregister_mods(MOD_BIT(KC_LALT));
-      }
-      return false;
+      return tap_unshifted_modded_key(KC_U, record, MOD_BIT(KC_LALT));
 
     // Tested:
     // A rapid succession of ´ + E may ignore E (when it happens before the keyup of ´) because ´ is, in fact A(KB_E).
@@ -250,28 +274,46 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
       return false;
 
-    // Tested:
-    // Poor's man LT/MT used when we want a shifted or otherwise modified key code
-    // See https://thomasbaart.nl/2018/12/09/qmk-basics-tap-and-hold-actions/#a-workaround-for-mod-tap 
-    case L_SYM_U:
-      if (record->event.pressed){
-        sym_undo_timer = timer_read();
-        layer_on(_SYM);
-      } else {
-        layer_off(_SYM);
-        if (timer_elapsed(sym_undo_timer) < TAPPING_TERM) {
-          tap_code16(G(KC_Z));
-        }
-      }
+    case S_ELG:
+      if (record->event.pressed) {
+        tap_code(KC_L);
+        tap_code16(S(A(KC_9)));
+        tap_code(KC_L);
+      }  
       return false;
+
+    case S_KAR:
+      if (record->event.pressed) {
+        tap_code(KC_MINS);
+        tap_code16(KC_GT);
+       }  
+      return false;
+
+    // Tested:
+    // Poor man's LT/MT used when we want a shifted or otherwise modified key code
+    // See https://thomasbaart.nl/2018/12/09/qmk-basics-tap-and-hold-actions/#a-workaround-for-mod-tap 
+    // Issue: Typing SYM + ( faster than the TAPPING_TERM taps the symbol and thenUNDO
+    // case L_SYM_U:
+    //   if (record->event.pressed){
+    //     sym_undo_timer = timer_read();
+    //     layer_on(_SYM);
+    //   } else {
+    //     layer_off(_SYM);
+    //     if (timer_elapsed(sym_undo_timer) < TAPPING_TERM) {
+    //       tap_code16(G(KC_Z));
+    //     }
+    //   }
+    //   return false;
     case L_WIN:
       if(record->event.pressed) {
         win_again_timer = timer_read();
-        register_code(KC_LCMD);
+        register_code(KC_LALT);
         register_code(KC_LSFT);
+        register_code(KC_LCTL);
       } else {
+        unregister_code(KC_LCTL);
         unregister_code(KC_LSFT);
-        unregister_code(KC_LCMD);
+        unregister_code(KC_LALT);
         if (timer_elapsed(win_again_timer) < TAPPING_TERM) {
           tap_code16(S(G(KC_Z)));
         }
@@ -295,7 +337,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   }
 
 }
-
+  
 // Tested:
 void safe_reset(qk_tap_dance_state_t *state, void *user_data) {
   if (state->count == 5) {

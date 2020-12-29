@@ -25,17 +25,31 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /* Select hand configuration */
 
 #define MASTER_LEFT
-// #define MASTER_RIGHTfffddsaaasdfdaaasffgasdfgssfgasdfg
+// #define MASTER_RIGHT
 // #define EE_HANDS
 
 #define SSD1306OLED
 
 #define USE_SERIAL_PD2
 
-#define TAPPING_FORCE_HOLD
-#define TAPPING_TERM 300
-#define PERMISSIVE_HOLD
+// The MT is also MOD if both keys are held longer than the TAPPING_TERM, even if the MT key is relased first
+// And MT down + k down + MT up + k up acts as tap unless both keys are held longer than the TAPPING_TERM
+// See https://beta.docs.qmk.fm/using-qmk/software-features/tap_hold#ignore-mod-tap-interrupt
+// See https://precondition.github.io/home-row-mods#ignore-mod-tap-interrupt
 #define IGNORE_MOD_TAP_INTERRUPT
+// https://beta.docs.qmk.fm/using-qmk/software-features/tap_hold#tapping-term
+#define TAPPING_TERM 220
+
+// When a user holds an MT key after tapping it, make it MOD instead of tapping for key repeat
+// See https://beta.docs.qmk.fm/using-qmk/software-features/tap_hold#tapping-force-hold
+// See https://precondition.github.io/home-row-mods#tapping-force-hold
+#define TAPPING_FORCE_HOLD
+
+// The MT is MOD if a second key is tapped and releases before MT, even if within TAPPING_TERM
+// See https://beta.docs.qmk.fm/using-qmk/software-features/tap_hold#permissive-hold
+// See https://precondition.github.io/home-row-mods#permissive-hold
+#define PERMISSIVE_HOLD
+
 
 #define TAP_HOLD_CAPS_DELAY 0
 
