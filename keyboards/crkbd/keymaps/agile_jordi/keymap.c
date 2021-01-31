@@ -64,7 +64,8 @@ enum custom_keycodes {
   //NV_CMTB
   // Special symbols
   S_ELG,
-  S_KAR
+  S_KAR,
+  S_SAR
 };
 
 // Home row modifiers
@@ -128,7 +129,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
   [_SYM] = LAYOUT_split_3x6_3(
       XXXXXXX, XXXXXXX, XXXXXXX, S_EUR,   KC_CIRC, XXXXXXX,                      KC_DLR,  KC_LBRC, KC_RBRC, KC_PIPE, KC_AMPR, KC_BSLS,\
-      XXXXXXX, XXXXXXX, S_ELG,   S_KAR,   XXXXXXX, XXXXXXX,                      KC_HASH, KC_LPRN, KC_RPRN, KC_ASTR, KC_SLSH, KC_PERC,\
+      XXXXXXX, XXXXXXX, S_ELG,   S_KAR,   S_SAR,   XXXXXXX,                      KC_HASH, KC_LPRN, KC_RPRN, KC_ASTR, KC_SLSH, KC_PERC,\
       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      KC_EQL,  KC_LCBR, KC_RCBR, KC_LT,   KC_GT,   KC_TILD,\
                                           XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, KC_SPC,  XXXXXXX \
     )
@@ -282,9 +283,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }  
       return false;
 
-    case S_KAR:
+    case S_KAR: // ->
       if (record->event.pressed) {
         tap_code(KC_MINS);
+        tap_code16(KC_GT);
+       }  
+      return false;
+
+    case S_SAR: // =>
+      if (record->event.pressed) {
+        tap_code16(KC_EQL);
         tap_code16(KC_GT);
        }  
       return false;
