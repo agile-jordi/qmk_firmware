@@ -28,6 +28,13 @@
 //
 // We can still use CAPS_LOCK as usual, as it should only affect alphas. We need to handle accents a dieresis to use a non shifted
 // version of the letter, as otherwise they emmit the wrong symbol. 
+//
+// ## An alternative
+//
+// Acording to https://www.reddit.com/r/olkb/comments/k8wrge/which_layer_is_active_when_shift_key_is_held_down/ it may be far easier 
+// to simply capture shifted keys I want to change and change them manually. This seems mostly what I do here with register_non_shifted_key
+// but avoiding the whole shifted layer and having specific, hardcoded changes instead.
+
 
 #include QMK_KEYBOARD_H
 
@@ -111,9 +118,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
   [_NUMS] = LAYOUT_split_3x6_3( \
       XXXXXXX, KC_PSLS, KC_7,    KC_8,    KC_9,    KC_PMNS,                      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,\
-      XXXXXXX, KC_PAST, KC_4,    KC_5,    KC_6,    KC_PPLS,                      XXXXXXX, KC_RSFT, KC_RCMD, KC_RALT, KC_RCTL, XXXXXXX,\
-      XXXXXXX, KC_PERC, KC_1,    KC_2,    KC_3,    KC_EQL,                       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,\
-                                          XXXXXXX, KC_0,    XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX \
+      KC_PERC, KC_PAST, KC_4,    KC_5,    KC_6,    KC_PPLS,                      XXXXXXX, KC_RSFT, KC_RCMD, KC_RALT, KC_RCTL, XXXXXXX,\
+      S_EUR,   KC_COMM, KC_1,    KC_2,    KC_3,    KC_DOT,                       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,\
+                                          KC_BSPC, KC_0,    KC_EQL,     XXXXXXX, XXXXXXX, XXXXXXX \
     ),
 
   [_FUN] = LAYOUT_split_3x6_3( \
@@ -130,9 +137,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                           XXXXXXX, XXXXXXX, XXXXXXX,    KC_LSFT, KC_SPC,  XXXXXXX \
     ),
   [_SYM] = LAYOUT_split_3x6_3(
-      XXXXXXX, XXXXXXX, XXXXXXX, S_EUR,   KC_CIRC, XXXXXXX,                      KC_DLR,  KC_LBRC, KC_RBRC, KC_PIPE, KC_AMPR, KC_BSLS,\
-      XXXXXXX, XXXXXXX, S_ELG,   S_KAR,   S_SAR,   XXXXXXX,                      KC_HASH, KC_LPRN, KC_RPRN, KC_ASTR, KC_SLSH, KC_PERC,\
-      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      KC_EQL,  KC_LCBR, KC_RCBR, KC_LT,   KC_GT,   KC_TILD,\
+      XXXXXXX, XXXXXXX, XXXXXXX, S_EUR,   XXXXXXX, XXXXXXX,                      KC_DLR,  KC_LBRC, KC_RBRC, KC_PIPE, KC_AMPR, KC_BSLS,\
+      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      KC_HASH, KC_LPRN, KC_RPRN, S_ELG,   S_KAR,   S_SAR,\
+      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      KC_CIRC, KC_LCBR, KC_RCBR, KC_LT,   KC_GT,   KC_TILD,\
                                           XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, KC_SPC,  XXXXXXX \
     )
 };
