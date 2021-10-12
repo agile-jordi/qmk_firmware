@@ -53,6 +53,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define TAP_HOLD_CAPS_DELAY 0
 
+#define ONESHOT_TAP_TOGGLE 3
+#define ONESHOT_TIMEOUT 2000
+
 
 
 #ifdef RGBLIGHT_ENABLE

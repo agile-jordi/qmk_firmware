@@ -9,7 +9,7 @@
 // ## How does it work?
 //
 // We don't define any key to act as shift. Instead, the key that will shift keys activates this layer.
-// When entering the layer, shift is prerssed, and it is released when leaving the layer.
+// When entering the layer, shift is pressed, and it is released when leaving the layer.
 // That way, any key not overriden in this layer behaves exactly as the key in the base layer when shifted in the ANSI US EN layout.
 // But we can redefine certain keys to act differently.
 // When one of those keys is a symbol that is not in shift position, we need to "unshift" before registering the key and reshift
@@ -82,13 +82,15 @@ enum custom_keycodes {
 #define L_NAV_S LT(_NAV,KC_SPC)
 #define L_NUM_S LT(_NUMS,KC_SPC)
 #define L_FUN_E LT(_FUN,KC_ENT)
-#define L_WIN KC_AGAIN
+#define L_WIN KC_AGAIN             // Window movement layer / Redo
 #define L_SFT LT(_SHIFTED, KC_DEL)
 
 
 #define S_EUR A(S(KC_2))
 
 #define TD_RST TD(TD_RESET)
+
+#define TSFT OSL(_SHIFTED)
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
@@ -98,7 +100,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
       KC_ESC,  KC_Q,    KC_W,    RT_E,    KC_R,    KC_T,                         KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_SLASH,\
       KC_TAB,  M_A_CTL, M_S_ALT, M_D_CMD, M_F_SFT, KC_G,                         KC_H,    M_J_SFT, M_K_CMD, M_L_ALT, M_CL_CTL,CA_ACCT,\
       CA_ACCO, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,                         KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_MINS, KC_QUOT,\
-                                          L_SYM_B, L_NAV_S, L_WIN,      L_SFT,   L_NUM_S, L_FUN_E \
+                                          L_SYM_B, L_NAV_S, L_WIN,      TSFT,    L_NUM_S, L_FUN_E \
   ),
 
   [_SHIFTED] = LAYOUT_split_3x6_3( \
@@ -147,7 +149,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
   // IS_LAYER_ON returns wether the layer is on before applying state
   // I register KC_LSFT MOD only when the _SHIFTED layer is activated, not every time it is active
   // I assume registering the KC_LSFT MOD is somehow better than registering a key, but this is pure speculation
-  if(IS_LAYER_OFF(_SHIFTED) && IS_LAYER_ON_STATE(state, _SHIFTED)){
+  if(IS_LAYER_OFF(_SHIFTED) && (IS_LAYER_ON_STATE(state, _SHIFTED))){
     // https://docs.qmk.fm/#/feature_macros?id=advanced-macro-functions
     register_mods(MOD_BIT(KC_LSFT));
     // register_code(KC_LSFT);
@@ -157,6 +159,13 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     // unregister_code(KC_LSFT);
   }
   return state;
+}
+
+// Trying to make OLT(_SHIFTED) work...
+void oneshot_layer_changed_user(uint8_t layer) {
+  if(layer == _SHIFTED){
+    set_oneshot_mods(MOD_BIT(KC_LSFT));
+  }
 }
 
 uint16_t nonShiftedCode(uint16_t keycode) {
@@ -266,7 +275,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
     // Tested:
     // A rapid succession of ´ + E may ignore E (when it happens before the keyup of ´) because ´ is, in fact A(KB_E).
-    // So the custom keycode RT_E (for ReType) simply registers KC_E (which unregisters it if alerady perssed, see actions.c:804)
+    // So the custom keycode RT_E (for ReType) simply registers KC_E (which unregisters it if alerady pressed, see actions.c:804)
     case RT_E:
       if (record->event.pressed){
         register_code(KC_E);
@@ -323,6 +332,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         unregister_code(KC_LSFT);
         unregister_code(KC_LALT);
         if (timer_elapsed(win_again_timer) < TAPPING_TERM) {
+          // REDO
           tap_code16(S(G(KC_Z)));
         }
       }
