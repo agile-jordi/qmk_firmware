@@ -202,7 +202,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     case MS_SLA_AT:   // / / @
       return process_manual_shft(KC_SLASH, KC_AT, record->event.pressed);
     case CA_ACC_DIE:  // ´ / ¨
-      return process_manual_shft(A(KC_E), A(KC_U), record->event.pressed);
+      // We want to tap the accent to avoid Alt being pressed after the accent is typed: 
+      if (record->event.pressed){
+        process_manual_shft(A(KC_E), A(KC_U), true);
+        return process_manual_shft(A(KC_E), A(KC_U), false);
+      }
     case CA_ACCO:     // ` / ^
       return process_manual_shft(A(KC_GRV), A(KC_I), record->event.pressed);
    
