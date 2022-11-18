@@ -56,7 +56,7 @@ void update_oneshot(
     }
 }
 
-void update_oneshot_layer(
+void update_lt_layer(
     oneshot_state *state,
     uint8_t layer,
     uint16_t keycode_if_unused,

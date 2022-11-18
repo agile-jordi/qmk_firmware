@@ -45,7 +45,7 @@ enum custom_keycodes {
   MS_COM_QUE = SAFE_RANGE,  // , / ?
   MS_DOT_EXC,               // . / !
   MS_SLA_AT,                // / / @
-  MS_CL_CTL,                // Ctrl / : / ;
+  MS_CL_SCL,                // : / ;
 
   // Special symbols
 
@@ -90,22 +90,22 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   [_BASE] = LAYOUT_split_3x6_3( \
       KC_ESC,  KC_Q,    KC_W,    RT_E,    KC_R,    KC_T,                         KC_Y,    KC_U,    KC_I,       KC_O,       KC_P,      MS_SLA_AT,\
-      KC_TAB,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,                         KC_H,    KC_J,    KC_K,       KC_L,       KC_SCOLON, CA_ACC_DIE,\
+      KC_TAB,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,                         KC_H,    KC_J,    KC_K,       KC_L,       MS_CL_SCL, CA_ACC_DIE,\
       CA_ACCO, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,                         KC_N,    KC_M,    MS_COM_QUE, MS_DOT_EXC, KC_MINS,   KC_QUOT,\
-                                          OS_SYM , OS_NAV, L_WIN,      OS_SHFT,  OS_NUMS, OS_FUN \
+                                          OS_SYM , OS_NAV, L_WIN,       OS_SHFT, KC_SPC, OS_NUMS \
   ),
   [_NUMS] = LAYOUT_split_3x6_3( \
       XXXXXXX, KC_PSLS, KC_7,    KC_8,    KC_9,    KC_PMNS,                      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,\
       KC_PERC, KC_PAST, KC_4,    KC_5,    KC_6,    KC_PPLS,                      XXXXXXX, OS_SHFT, OS_CMD,  OS_ALT,  OS_CTRL, XXXXXXX,\
       S_EUR,   KC_COMM, KC_1,    KC_2,    KC_3,    KC_DOT,                       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,\
-                                          KC_BSPC, KC_0,    KC_EQL,     XXXXXXX, OS_NUMS, XXXXXXX \
+                                          KC_BSPC, KC_0,   KC_EQL,      XXXXXXX, XXXXXXX, OS_NUMS \
     ),
 
   [_FUN] = LAYOUT_split_3x6_3( \
       TD_RST,  KC_F10,  KC_F7,   KC_F8,   KC_F9,   KC__VOLUP,                    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,\
       XXXXXXX, KC_F11,  KC_F4,   KC_F5,   KC_F6,   KC__VOLDOWN,                  XXXXXXX, OS_SHFT, OS_CMD,  OS_ALT,  OS_CTRL, XXXXXXX,\
       XXXXXXX, KC_F12,  KC_F1,   KC_F2,   KC_F3,   KC__MUTE,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,\
-                                          KC_BSPC, KC_SPC,  XXXXXXX,    XXXXXXX, XXXXXXX, OS_FUN \
+                                          KC_BSPC, KC_SPC,  XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX \
     ),
 
   [_NAV] = LAYOUT_split_3x6_3( \
@@ -118,7 +118,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
       XXXXXXX, XXXXXXX, XXXXXXX, S_EUR,   XXXXXXX, XXXXXXX,                      KC_DLR,  KC_LBRC, KC_RBRC, KC_PIPE, KC_AMPR, KC_BSLS,\
       XXXXXXX, OS_CTRL, OS_ALT,  OS_CMD,  OS_SHFT, XXXXXXX,                      KC_HASH, KC_LPRN, KC_RPRN, S_ELG,   S_KAR,   S_SAR,\
       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      KC_CIRC, KC_LCBR, KC_RCBR, KC_LT,   KC_GT,   KC_TILD,\
-                                          OS_SYM,  XXXXXXX, XXXXXXX,    XXXXXXX, KC_SPC,  KC_ENT \
+                                          OS_SYM,  XXXXXXX, XXXXXXX,    KC_LSFT, KC_SPC,  KC_ENT \
     )
 };
 
@@ -221,10 +221,10 @@ oneshot_state os_layer_nav = os_up_unqueued;
 oneshot_state os_layer_sym = os_up_unqueued;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-  update_oneshot_layer(&os_layer_nums, _NUMS, KC_SPC, OS_NUMS, keycode, record);
-  update_oneshot_layer(&os_layer_fun, _FUN, KC_ENT, OS_FUN, keycode, record);
-  update_oneshot_layer(&os_layer_nav, _NAV, KC_SPC, OS_NAV, keycode, record);
-  update_oneshot_layer(&os_layer_sym, _SYM, KC_BSPC, OS_SYM, keycode, record);
+  update_lt_layer(&os_layer_nums, _NUMS, KC_ENT, OS_NUMS, keycode, record);
+  update_lt_layer(&os_layer_fun, _FUN, KC_ENT, OS_FUN, keycode, record);
+  update_lt_layer(&os_layer_nav, _NAV, KC_SPC, OS_NAV, keycode, record);
+  update_lt_layer(&os_layer_sym, _SYM, KC_BSPC, OS_SYM, keycode, record);
 
   update_oneshot(&os_shft_state, KC_LSFT, OS_SHFT, keycode, record);
   update_oneshot(&os_ctrl_state, KC_LCTL, OS_CTRL, keycode, record);
@@ -254,7 +254,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     case CA_ACCO:  
       process_manual_shft(A(KC_GRV), A(KC_I), record->event.pressed);
       break;
-    case MS_CL_CTL:  
+    case MS_CL_SCL:  
       process_manual_shft(S(KC_SCOLON), KC_SCOLON, record->event.pressed);
       break;
     case CA_ACC_DIE:  
